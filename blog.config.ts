@@ -1,13 +1,14 @@
 const blogConfig = {
-  author: 'Your Name',
-  title: 'MyBlog',
-  subtitle: '写代码，写文字，写生活。',
-  description: '一个热爱技术与写作的开发者，记录技术思考、生活感悟与项目实践。',
-  avatar: '/avatar.png',
+  author: 'E1zGo',                          // 改成你的名字/昵称
+  title: 'E1zGo',                           // 改成你的博客名
+  subtitle: '山前山后各有风景。',        // 改成你喜欢的slogan
+  description: 'Code and Life',
+  avatar: '/avatar.png',                    // 把你的头像图片放到 public/avatar.png
+  siteUrl: 'https://e1zgo.top',            // 你的域名，用于SEO
   socials: {
-    github: 'https://github.com/yourusername',
-    twitter: 'https://twitter.com/yourusername',
-    email: 'you@example.com',
+    github: 'https://github.com/E1zGo',    // 改成你的 GitHub
+    twitter: 'https://twitter.com/E1zGo',  // 没有就留空 ''
+    email: 'faceit.rq@foxmail.com',               // 改成你的邮箱
   },
   postsPerPage: 6,
   nav: [
@@ -21,7 +22,7 @@ const blogConfig = {
     search: true,
     toc: true,
     readingProgress: true,
-    comments: false,   // 配置好 GiscusComment.vue 后改为 true
+    comments: false,
   },
 }
 
