@@ -1,8 +1,8 @@
 const blogConfig = {
   author: 'E1zGo',                          // 改成你的名字/昵称
   title: 'E1zGo',                           // 改成你的博客名
-  subtitle: '山前山后各有风景。',        // 改成你喜欢的slogan
-  description: 'Code and Life',
+  subtitle: 'Code and Life',        // 改成你喜欢的slogan
+  description: '山前山后各有风景',
   avatar: '/avatar.png',                    // 把你的头像图片放到 public/avatar.png
   siteUrl: 'https://e1zgo.top',            // 你的域名，用于SEO
   socials: {

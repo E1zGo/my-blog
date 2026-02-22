@@ -1,6 +1,6 @@
 ---
 title: Vite 插件开发从入门到上手
-date: 2024-01-08
+date: 2026-02-22
 tags: [Vite, 工程化, 前端]
 excerpt: Rollup 插件机制与 Vite 专属钩子的全面解析，附带实战插件开发案例。
 ---

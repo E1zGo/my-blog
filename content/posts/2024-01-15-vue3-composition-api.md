@@ -1,7 +1,7 @@
 ---
 title: Vue 3 Composition API 深度实践指南
-date: 2024-01-15
-updated: 2024-02-01
+date: 2026-02-21
+updated: 2026-02-22
 tags: [Vue3, 前端]
 excerpt: 从 Options API 到 Composition API 的思维转变，以及如何组织复杂业务逻辑的最佳实践。
 ---

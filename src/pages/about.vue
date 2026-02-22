@@ -51,7 +51,7 @@ const skills = ['Vue 3', 'TypeScript', 'Node.js', 'Vite', 'CSS / TailwindCSS', '
           prose-a:text-[var(--color-accent)]">
           <p>
             你好！我是 <strong>{{ blogConfig.author }}</strong>，一名热爱技术与写作的开发者。
-            在这里我会分享关于前端开发、软件工程以及个人思考的文章。
+            在这里我会分享关于前端开发、软件工程、个人思考的文章以及my life。
           </p>
           <p>
             这个博客使用 <strong>Vue 3 + Vite + TailwindCSS v4</strong> 搭建，文章以 Markdown 格式存储在
