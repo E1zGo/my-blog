@@ -2,9 +2,9 @@
 import { useHead } from '@vueuse/head'
 import PostCard from '@/components/blog/PostCard.vue'
 import TagCloud from '@/components/blog/TagCloud.vue'
-import { getAllPosts } from '@/utils/posts'
-import blogConfig from '../../blog.config'
 
+import blogConfig from '../../blog.config'
+import { getAllPosts, getAllTags } from '@/utils/posts'
 useHead({ title: `${blogConfig.title} — ${blogConfig.subtitle}` })
 
 const posts = getAllPosts()
@@ -65,10 +65,10 @@ const latestPosts = posts.slice(0, 6)
         <!-- Stats -->
         <div class="grid grid-cols-2 gap-3 mt-3">
           <div
-            v-for="stat in [
-              { num: posts.length, label: '篇文章' },
-              { num: 6, label: '个项目' },
-            ]"
+  v-for="stat in [
+    { num: posts.length, label: '篇文章' },
+    { num: getAllTags().length, label: '个标签' },
+  ]"
             :key="stat.label"
             class="bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] p-4"
           >
