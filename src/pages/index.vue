@@ -9,7 +9,6 @@ useHead({ title: `${blogConfig.title} — ${blogConfig.subtitle}` })
 
 const posts = getAllPosts()
 const latestPosts = posts.slice(0, 6)
-const featuredPost = posts[0]
 </script>
 
 <template>
