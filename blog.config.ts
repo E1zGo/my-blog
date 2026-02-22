@@ -22,7 +22,7 @@ const blogConfig = {
     search: true,
     toc: true,
     readingProgress: true,
-    comments: false,
+    comments: true,
   },
 }
 

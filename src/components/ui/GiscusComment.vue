@@ -4,10 +4,10 @@ import { useDarkMode } from '@/composables/useDarkMode'
 
 // 请到 https://giscus.app 填写你的仓库信息后替换以下配置
 const config = {
-  repo: 'your-github/your-repo',         // ← 改成你的 GitHub 仓库
-  repoId: 'YOUR_REPO_ID',                // ← 从 giscus.app 获取
+  repo: 'E1zGo/my-blog',         // ← 改成你的 GitHub 仓库
+  repoId: 'R_kgDORVXFOg',                // ← 从 giscus.app 获取
   category: 'Announcements',
-  categoryId: 'YOUR_CATEGORY_ID',        // ← 从 giscus.app 获取
+  categoryId: 'DIC_kwDORVXFOs4C2-At',        // ← 从 giscus.app 获取
   mapping: 'pathname',
   reactionsEnabled: '1',
   emitMetadata: '0',
