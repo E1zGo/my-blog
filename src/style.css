@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+@import "tailwindcss";
+@import "prismjs/themes/prism-tomorrow.css";
+
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-serif: "Noto Serif SC", "Georgia", serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  --color-ink:      #1a1612;
+  --color-paper:    #f5f0e8;
+  --color-warm:     #e8dfc8;
+  --color-accent:   #c0392b;
+  --color-accent2:  #e67e22;
+  --color-muted:    #8a7f72;
+  --color-code-bg:  #2d2520;
+}
+
+/* ── Base ── */
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-serif);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* ── 深色模式（功能10）── */
+.dark {
+  --color-paper:   #1a1612;
+  --color-ink:     #f0ebe0;
+  --color-warm:    #2d2520;
+  --color-muted:   #9a8f80;
+  --color-code-bg: #111009;
+}
+
+.dark body { background-color: var(--color-paper); color: var(--color-ink); }
+
+/* ── Grain overlay ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.5;
+}
+
+/* ── Prose overrides ── */
+.prose pre { background: var(--color-code-bg) !important; border: 1px solid rgba(255,255,255,0.08); }
+.prose code:not(pre code) {
+  background: var(--color-warm);
+  color: var(--color-accent);
+  padding: 0.1em 0.4em;
+  border-radius: 3px;
+  font-size: 0.875em;
+}
+.prose a { color: var(--color-accent); text-decoration-color: var(--color-accent); }
+.prose blockquote {
+  border-left-color: var(--color-accent);
+  background: var(--color-warm);
+  padding: 1rem 1.5rem;
+  border-radius: 0 4px 4px 0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-warm); }
+::-webkit-scrollbar-thumb { background: var(--color-muted); border-radius: 3px; }
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fadeInUp 0.6s ease forwards; }
+.delay-100 { animation-delay: 0.1s; opacity: 0; }
+.delay-200 { animation-delay: 0.2s; opacity: 0; }
+.delay-300 { animation-delay: 0.3s; opacity: 0; }
+.delay-400 { animation-delay: 0.4s; opacity: 0; }
