@@ -1,86 +1,44 @@
 import type { Post } from '@/types/blog'
 
-const modules = import.meta.glob('/content/posts/*.md', { eager: true })
+const modules = import.meta.glob<Record<string, unknown>>('/content/posts/*.md', {
+  query: '?post-meta', import: 'default', eager: true,
+})
+let cache: Post[] | null = null
 
-function calcReadTime(content: string): number {
-  const words = content.replace(/<[^>]+>/g, '').length
-  return Math.max(1, Math.ceil(words / 300))
+function dateString(value: unknown, fallback: string): string {
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  return typeof value === 'string' && !Number.isNaN(Date.parse(value)) ? value.slice(0, 10) : fallback
 }
-
-// 缓存，避免多次调用顺序不一致导致上/下篇错乱
-let _cache: Post[] | null = null
-
 export function getAllPosts(): Post[] {
-  if (_cache) return _cache
-
-  _cache = Object.entries(modules)
-    .map(([path, mod]) => {
-      const m = mod as Record<string, unknown>
-      const filename = path.split('/').pop()!.replace('.md', '')
-
-      // 兼容多种 frontmatter 导出方式
-      const fm = (
-        m['frontmatter'] ??
-        m['meta'] ??
-        {}
-      ) as Record<string, unknown>
-
-      // 部分插件版本把 title 直接挂在模块上
-      const title =
-        (fm['title'] as string) ??
-        (m['title'] as string) ??
-        filename
-
-      const tags = Array.isArray(fm['tags'])
-        ? (fm['tags'] as string[])
-        : []
-
-      const date =
-        (fm['date'] as string) ??
-        (m['date'] as string) ??
-        '1970-01-01'
-
-      const excerpt =
-        (fm['excerpt'] as string) ??
-        (m['excerpt'] as string) ??
-        ''
-
-      return {
-        title,
-        date,
-        tags,
-        excerpt,
-        slug: filename,
-        path: `/posts/${filename}`,
-        readTime: calcReadTime(
-          typeof m['__raw'] === 'string' ? m['__raw'] : ''
-        ),
-      } as Post
-    })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  return _cache
+  if (cache) return cache
+  cache = Object.entries(modules).map(([path, fm]) => {
+    const slug = path.split('/').pop()!.replace(/\.md$/, '')
+    const count = typeof fm.wordCount === 'number' ? fm.wordCount : 0
+    return {
+      slug,
+      title: typeof fm.title === 'string' ? fm.title : slug,
+      date: dateString(fm.date, slug.match(/^\d{4}-\d{2}-\d{2}/)?.[0] || '1970-01-01'),
+      tags: Array.isArray(fm.tags) ? [...new Set(fm.tags.filter((t): t is string => typeof t === 'string'))] : [],
+      excerpt: typeof fm.excerpt === 'string' ? fm.excerpt : '',
+      cover: typeof fm.cover === 'string' ? fm.cover : undefined,
+      updated: fm.updated ? dateString(fm.updated, '') : undefined,
+      draft: fm.draft === true,
+      path: `/posts/${encodeURIComponent(slug)}`,
+      wordCount: count,
+      readTime: Math.max(1, Math.ceil(count / 300)),
+    }
+  }).filter(p => !p.draft).sort((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug))
+  return cache
 }
-
-export function getPostBySlug(slug: string): Post | undefined {
-  return getAllPosts().find(p => p.slug === slug)
-}
-
+export function getPostBySlug(slug: string): Post | undefined { return getAllPosts().find(p => p.slug === slug) }
 export function getPrevNextPost(slug: string): { prev: Post | null; next: Post | null } {
   const posts = getAllPosts()
-  const idx = posts.findIndex(p => p.slug === slug)
-  return {
-    prev: idx < posts.length - 1 ? posts[idx + 1] : null,  // 更旧的
-    next: idx > 0                ? posts[idx - 1] : null,  // 更新的
-  }
+  const index = posts.findIndex(p => p.slug === slug)
+  if (index < 0) return { prev: null, next: null }
+  return { prev: posts[index + 1] ?? null, next: posts[index - 1] ?? null }
 }
-
 export function getAllTags(): { name: string; count: number }[] {
-  const map = new Map<string, number>()
-  getAllPosts().forEach(p =>
-    p.tags.forEach(t => map.set(t, (map.get(t) ?? 0) + 1))
-  )
-  return Array.from(map.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
+  const counts = new Map<string, number>()
+  getAllPosts().forEach(post => post.tags.forEach(tag => counts.set(tag, (counts.get(tag) ?? 0) + 1)))
+  return [...counts].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-CN'))
 }

@@ -1,148 +1,85 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'  // 移除 computed，不需要了
-import { useRoute, useRouter } from 'vue-router'
+import { defineAsyncComponent, ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { useHead } from '@vueuse/head'
 import { getPostBySlug, getPrevNextPost } from '@/utils/posts'
 import { formatDate } from '@/utils/date'
 import ReadingProgress from '@/components/ui/ReadingProgress.vue'
 import TableOfContents from '@/components/blog/TableOfContents.vue'
 import GiscusComment from '@/components/ui/GiscusComment.vue'
+import NotFound from '@/pages/[...all].vue'
 import blogConfig from '../../../blog.config'
 
 const route = useRoute()
-const router = useRouter()
 const slug = route.params.slug as string
-
 const post = getPostBySlug(slug)
-if (!post) router.push('/404')
-
 useHead({
-  title: post ? `${post.title} — ${blogConfig.title}` : '404',
-  meta: post ? [{ name: 'description', content: post.excerpt }] : [],
+  title: post ? `${post.title} — ${blogConfig.title}` : `404 — ${blogConfig.title}`,
+  meta: post ? [{ name: 'description', content: post.excerpt }] : [{ name: 'robots', content: 'noindex' }],
+  link: post ? [{ rel: 'canonical', href: `${blogConfig.siteUrl}${post.path}` }] : [],
 })
-
 const { prev: prevPost, next: nextPost } = getPrevNextPost(slug)
+const modules = import.meta.glob('/content/posts/*.md')
+const loader = modules[`/content/posts/${slug}.md`]
+const loadError = ref(false)
+const contentReady = ref(false)
+const PostContent = post && loader ? defineAsyncComponent({
+  loader: loader as () => Promise<{ default: object }>,
+  onError() { loadError.value = true },
+}) : null
 
-// ✅ 用 import.meta.glob 替代动态绝对路径 import，Vite 可以静态分析
-const mdModules = import.meta.glob('/content/posts/*.md')
-const matchKey = Object.keys(mdModules).find(k => k.endsWith(`/${slug}.md`))
-const PostContent = matchKey
-  ? defineAsyncComponent(mdModules[matchKey] as () => Promise<{ default: object }>)
-  : null
+async function onContentReady() {
+  await nextTick()
+  contentReady.value = true
+  document.querySelectorAll<HTMLElement>('[data-post-content] pre').forEach(pre => {
+    if (pre.querySelector('.copy-code')) return
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'copy-code'
+    button.textContent = '复制代码'
+    button.setAttribute('aria-label', '复制代码')
+    pre.dataset.language = pre.querySelector('code')?.className.replace('language-', '') || 'text'
+    pre.appendChild(button)
+  })
+  if (route.hash) {
+    try { document.getElementById(decodeURIComponent(route.hash.slice(1)))?.scrollIntoView({ behavior: 'instant' }) } catch { /* Invalid URL fragments do not affect the article. */ }
+  }
+}
+const timers = new Set<ReturnType<typeof setTimeout>>()
+async function copyCode(event: MouseEvent) {
+  const target = event.target
+  if (!(target instanceof HTMLButtonElement) || !target.classList.contains('copy-code')) return
+  const code = target.parentElement?.querySelector('code')?.textContent || ''
+  try {
+    await navigator.clipboard.writeText(code)
+    target.textContent = '已复制 ✓'
+  } catch { target.textContent = '请手动选择复制' }
+  const timer = setTimeout(() => { target.textContent = '复制代码'; timers.delete(timer) }, 2000)
+  timers.add(timer)
+}
+onMounted(() => { if (!PostContent && post) loadError.value = true })
+onUnmounted(() => timers.forEach(clearTimeout))
 </script>
 
 <template>
   <div v-if="post">
-    <!-- 阅读进度条 -->
-    <ReadingProgress />
-
-    <!-- 封面图 -->
-    <div v-if="post.cover" class="w-full h-64 md:h-80 overflow-hidden border-b-2 border-[var(--color-ink)]">
-      <img :src="post.cover" :alt="post.title" class="w-full h-full object-cover" />
-    </div>
-
-    <div class="max-w-6xl mx-auto px-6 py-12 flex gap-12">
-      <!-- 主体内容 -->
-      <div class="flex-1 min-w-0">
-        <!-- Back -->
-        <button
-          class="font-mono text-xs tracking-widest uppercase text-[var(--color-muted)] hover:text-[var(--color-accent)] transition-colors mb-10 flex items-center gap-2 cursor-pointer"
-          @click="$router.back()"
-        >
-          ← 返回
-        </button>
-
-        <!-- Header -->
-        <header class="mb-10 pb-8 border-b-2 border-[var(--color-ink)]">
-          <div class="flex flex-wrap gap-2 mb-4">
-            <RouterLink
-              v-for="tag in post.tags"
-              :key="tag"
-              :to="`/tags/${tag}`"
-              class="font-mono text-[10px] tracking-widest uppercase text-[var(--color-accent)] no-underline hover:underline"
-            >
-              // {{ tag }}
-            </RouterLink>
-          </div>
-
-          <h1 class="font-serif text-3xl md:text-4xl font-bold leading-tight mb-5">
-            {{ post.title }}
-          </h1>
-
-          <div class="flex flex-wrap items-center gap-4 font-mono text-xs text-[var(--color-muted)]">
-            <span>{{ formatDate(post.date) }}</span>
-            <span class="text-[var(--color-accent)]">·</span>
-            <span>{{ post.readTime }} min read</span>
-            <span class="text-[var(--color-accent)]">·</span>
-            <span>{{ blogConfig.author }}</span>
-            <template v-if="post.updated">
-              <span class="text-[var(--color-accent)]">·</span>
-              <span>更新于 {{ formatDate(post.updated) }}</span>
-            </template>
-          </div>
-        </header>
-
-        <!-- Excerpt -->
-        <p class="text-lg leading-relaxed text-[var(--color-muted)] border-l-4 border-[var(--color-accent)] pl-5 mb-10 italic">
-          {{ post.excerpt }}
-        </p>
-
-        <!-- Content -->
-        <article class="prose prose-lg max-w-none
-          prose-headings:font-serif prose-headings:font-semibold
-          prose-a:text-[var(--color-accent)] prose-a:no-underline hover:prose-a:underline
-          prose-blockquote:border-l-[var(--color-accent)]
-          prose-code:text-[var(--color-accent)]
-          prose-pre:bg-[var(--color-code-bg)]">
-          <component :is="PostContent" v-if="PostContent" />
-        </article>
-
-        <!-- Tags -->
-        <div class="mt-12 pt-8 border-t border-[rgba(26,22,18,0.15)] flex flex-wrap gap-2">
-          <RouterLink
-            v-for="tag in post.tags"
-            :key="tag"
-            :to="`/tags/${tag}`"
-            class="font-mono text-xs px-3 py-1.5 bg-[var(--color-warm)] border border-[rgba(26,22,18,0.2)] text-[var(--color-muted)] no-underline hover:bg-[var(--color-ink)] hover:text-[var(--color-paper)] transition-all"
-          >
-            # {{ tag }}
-          </RouterLink>
-        </div>
-
-        <!-- Prev / Next — 使用 RouterLink 确保跳转正确 -->
-        <nav class="mt-10 grid grid-cols-2 gap-4">
-          <RouterLink
-            v-if="prevPost"
-            :to="prevPost.path"
-            class="group border-2 border-[rgba(26,22,18,0.15)] p-5 hover:border-[var(--color-accent)] transition-colors no-underline block"
-          >
-            <div class="font-mono text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">← 上一篇（更早）</div>
-            <div class="font-serif text-sm font-semibold text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors">
-              {{ prevPost.title }}
-            </div>
-          </RouterLink>
-          <div v-else />
-
-          <RouterLink
-            v-if="nextPost"
-            :to="nextPost.path"
-            class="group border-2 border-[rgba(26,22,18,0.15)] p-5 hover:border-[var(--color-accent)] transition-colors no-underline text-right block"
-          >
-            <div class="font-mono text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-2">下一篇（更新）→</div>
-            <div class="font-serif text-sm font-semibold text-[var(--color-ink)] group-hover:text-[var(--color-accent)] transition-colors">
-              {{ nextPost.title }}
-            </div>
-          </RouterLink>
-        </nav>
-
-        <!-- 评论 -->
-        <GiscusComment />
+    <ReadingProgress v-if="blogConfig.features.readingProgress" />
+    <div class="page-width reading-layout">
+      <div class="reading-main">
+        <RouterLink to="/posts" class="text-link article-back">← 返回文章列表</RouterLink>
+        <header class="article-header"><div class="post-tags"><RouterLink v-for="tag in post.tags" :key="tag" :to="`/tags/${encodeURIComponent(tag)}`">{{ tag }}</RouterLink></div><h1>{{ post.title }}</h1><div class="post-meta"><span>{{ blogConfig.author }}</span><span>·</span><time :datetime="post.date">{{ formatDate(post.date) }}</time><span>·</span><span>{{ post.readTime }} 分钟阅读</span><span v-if="post.updated">更新于 {{ formatDate(post.updated) }}</span></div></header>
+        <img v-if="post.cover" :src="post.cover" :alt="post.title" class="article-cover" />
+        <p v-if="post.excerpt" class="article-excerpt">{{ post.excerpt }}</p>
+        <details v-if="blogConfig.features.toc && contentReady" class="mobile-toc"><summary>文章目录</summary><TableOfContents /></details>
+        <p v-if="loadError" role="alert" class="empty-state">文章暂时加载失败。<button class="text-link" @click="() => { $router.go(0) }">重新加载 ↻</button></p>
+        <p v-else-if="!contentReady" class="empty-state" role="status">正在打开文章…</p>
+        <article data-post-content class="prose" @click="copyCode"><component :is="PostContent" v-if="PostContent" @vue:mounted="onContentReady" /></article>
+        <p class="article-end">— 感谢阅读，希望对你有所启发 —</p>
+        <nav class="post-pagination" aria-label="相邻文章"><RouterLink v-if="prevPost" :to="prevPost.path"><span>← 上一篇</span><strong>{{ prevPost.title }}</strong></RouterLink><div v-else /><RouterLink v-if="nextPost" :to="nextPost.path" class="next"><span>下一篇 →</span><strong>{{ nextPost.title }}</strong></RouterLink></nav>
+        <GiscusComment v-if="blogConfig.features.comments" />
       </div>
-
-      <!-- 右侧 TOC -->
-      <aside class="hidden xl:block w-56 shrink-0">
-        <TableOfContents />
-      </aside>
+      <aside v-if="blogConfig.features.toc" class="reading-sidebar"><TableOfContents /></aside>
     </div>
   </div>
+  <NotFound v-else />
 </template>

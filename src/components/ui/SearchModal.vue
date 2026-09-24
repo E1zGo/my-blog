@@ -1,94 +1,51 @@
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSearch } from '@/composables/useSearch'
 import { useUiStore } from '@/stores/ui'
-
 const router = useRouter()
 const ui = useUiStore()
 const { query, results } = useSearch()
-
-function go(path: string) {
-  router.push(path)
-  ui.closeSearch()
-  query.value = ''
-}
-
+const input = ref<HTMLInputElement | null>(null)
+const panel = ref<HTMLElement | null>(null)
+const selected = ref(0)
+let previousFocus: HTMLElement | null = null
+let previousOverflow = ''
+function go(path: string) { ui.closeSearch(); router.push(path) }
 function onKeydown(e: KeyboardEvent) {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); ui.searchOpen ? ui.closeSearch() : ui.openSearch(); return }
+  if (!ui.searchOpen) return
+  if (e.key === 'Escape') { e.preventDefault(); ui.closeSearch() }
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && results.value.length) {
     e.preventDefault()
-    ui.openSearch()
+    selected.value = (selected.value + (e.key === 'ArrowDown' ? 1 : -1) + results.value.length) % results.value.length
+    panel.value?.querySelector(`#search-result-${selected.value}`)?.scrollIntoView({ block: 'nearest' })
   }
-  if (e.key === 'Escape') ui.closeSearch()
+  if (e.key === 'Enter' && document.activeElement === input.value && results.value[selected.value]) { e.preventDefault(); go(results.value[selected.value].path) }
+  if (e.key === 'Tab') {
+    const focusable = panel.value?.querySelectorAll<HTMLElement>('button, input, a[href]')
+    const first = focusable?.[0], last = focusable?.[focusable.length - 1]
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus() }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus() }
+  }
 }
-
-onMounted(() => window.addEventListener('keydown', onKeydown))
-onUnmounted(() => window.removeEventListener('keydown', onKeydown))
-
-watch(() => ui.searchOpen, (v) => {
-  if (!v) query.value = ''
+watch(query, () => { selected.value = 0 })
+watch(() => ui.searchOpen, async open => {
+  if (open) {
+    previousFocus = document.activeElement as HTMLElement | null
+    previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    await nextTick()
+    input.value?.focus()
+  } else {
+    query.value = ''
+    document.body.style.overflow = previousOverflow
+    previousFocus?.focus()
+  }
 })
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => { window.removeEventListener('keydown', onKeydown); if (ui.searchOpen) document.body.style.overflow = previousOverflow })
 </script>
-
 <template>
-  <Teleport to="body">
-    <Transition name="modal">
-      <div
-        v-if="ui.searchOpen"
-        class="fixed inset-0 z-[200] flex items-start justify-center pt-24 px-4"
-        @click.self="ui.closeSearch"
-      >
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="ui.closeSearch" />
-
-        <!-- Panel -->
-        <div class="relative w-full max-w-xl bg-[var(--color-paper)] border-2 border-[var(--color-ink)] shadow-2xl">
-          <!-- Search Input -->
-          <div class="flex items-center border-b-2 border-[var(--color-ink)] px-4">
-            <span class="text-[var(--color-muted)] mr-3 text-lg">⌕</span>
-            <input
-              v-model="query"
-              autofocus
-              placeholder="搜索文章、标签..."
-              class="flex-1 py-4 bg-transparent font-mono text-sm outline-none text-[var(--color-ink)] placeholder:text-[var(--color-muted)]"
-            />
-            <button
-              class="font-mono text-xs text-[var(--color-muted)] border border-[var(--color-muted)] px-2 py-0.5 cursor-pointer hover:text-[var(--color-ink)]"
-              @click="ui.closeSearch"
-            >ESC</button>
-          </div>
-
-          <!-- Results -->
-          <div v-if="results.length" class="max-h-80 overflow-y-auto">
-            <button
-              v-for="post in results"
-              :key="post.slug"
-              class="w-full text-left px-5 py-4 border-b border-[rgba(26,22,18,0.1)] hover:bg-[var(--color-warm)] transition-colors cursor-pointer"
-              @click="go(post.path)"
-            >
-              <div class="font-serif text-sm font-semibold text-[var(--color-ink)] mb-1">{{ post.title }}</div>
-              <div class="font-mono text-[10px] text-[var(--color-muted)]">
-                {{ post.date }} · {{ post.tags.join(', ') }}
-              </div>
-            </button>
-          </div>
-
-          <!-- Empty -->
-          <div v-else-if="query" class="px-5 py-8 text-center font-mono text-sm text-[var(--color-muted)]">
-            没有找到相关文章
-          </div>
-
-          <!-- Hint -->
-          <div v-else class="px-5 py-4 font-mono text-xs text-[var(--color-muted)]">
-            输入关键词搜索文章 · <kbd>Ctrl+K</kbd> 快速打开
-          </div>
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
+  <Teleport to="body"><Transition name="modal"><div v-if="ui.searchOpen" class="search-overlay" @click.self="ui.closeSearch"><section ref="panel" class="search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title"><div class="search-heading"><h2 id="search-title">寻找一篇文章</h2><button aria-label="关闭搜索" @click="ui.closeSearch">ESC</button></div><input ref="input" v-model="query" class="search-input" placeholder="输入标题、关键词或标签…" aria-label="搜索文章" autocomplete="off" /><div v-if="results.length" class="search-results"><button v-for="(post, i) in results" :id="`search-result-${i}`" :key="post.slug" class="search-result" :class="{ active: selected === i }" @click="go(post.path)" @focus="selected = i"><strong>{{ post.title }}</strong><span>{{ post.date }} · {{ post.tags.join(' / ') }}</span></button></div><p v-else-if="query.trim()" class="search-empty" role="status">没有找到相关文章，换个关键词试试。</p><p class="search-hint">{{ results.length ? `${results.length} 篇相关记录 · ↑ ↓ 选择 · Enter 打开` : '搜索标题、摘要和标签 · Esc 关闭' }}</p></section></div></Transition></Teleport>
 </template>
-
-<style scoped>
-.modal-enter-active, .modal-leave-active { transition: all 0.2s ease; }
-.modal-enter-from, .modal-leave-to { opacity: 0; }
-</style>

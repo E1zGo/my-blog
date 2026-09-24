@@ -1,18 +1,8 @@
-import { useLocalStorage } from '@vueuse/core'
-import { watch } from 'vue'
-
+import { useDark, useToggle } from '@vueuse/core'
+// All consumers share the same storage key; new visitors follow their system theme.
 export function useDarkMode() {
-  const isDark = useLocalStorage('blog-dark-mode', false)
-
-  function apply() {
-    document.documentElement.classList.toggle('dark', isDark.value)
-  }
-
-  watch(isDark, apply, { immediate: true })
-
-  function toggle() {
-    isDark.value = !isDark.value
-  }
-
+  const isDark = useDark({ storageKey: 'blog-theme', valueDark: 'dark', valueLight: '' })
+  const toggleValue = useToggle(isDark)
+  const toggle = () => { toggleValue() }
   return { isDark, toggle }
 }

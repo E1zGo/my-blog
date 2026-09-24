@@ -2,33 +2,7 @@
 import { useHead } from '@vueuse/head'
 import { getAllTags } from '@/utils/posts'
 import blogConfig from '../../../blog.config'
-
 useHead({ title: `标签 — ${blogConfig.title}` })
 const tags = getAllTags()
 </script>
-
-<template>
-  <div class="max-w-4xl mx-auto px-6 py-12">
-    <div class="mb-10 pb-6 border-b-2 border-[var(--color-ink)]">
-      <p class="font-mono text-xs tracking-widest uppercase text-[var(--color-accent)] mb-2">// Tags</p>
-      <h1 class="font-serif text-4xl font-bold">所有标签</h1>
-    </div>
-
-    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <RouterLink
-        v-for="tag in tags"
-        :key="tag.name"
-        :to="`/tags/${tag.name}`"
-        class="group flex items-center justify-between p-5 border-2 border-[rgba(26,22,18,0.15)] hover:border-[var(--color-accent)] transition-all no-underline"
-      >
-        <div>
-          <div class="font-mono text-[10px] tracking-widest uppercase text-[var(--color-accent)] mb-1">// tag</div>
-          <div class="font-serif text-lg font-semibold group-hover:text-[var(--color-accent)] transition-colors">{{ tag.name }}</div>
-        </div>
-        <div class="font-mono text-3xl font-bold text-[var(--color-warm)] group-hover:text-[var(--color-accent)] transition-colors">
-          {{ tag.count }}
-        </div>
-      </RouterLink>
-    </div>
-  </div>
-</template>
+<template><div class="page-width archive-page"><header class="page-heading"><p class="eyebrow">EXPLORE BY TOPIC</p><h1>从兴趣出发<span class="heading-dot">.</span></h1><p>给散落的思考分个类，找到你感兴趣的话题。</p></header><div class="tags-grid"><RouterLink v-for="(tag, i) in tags" :key="tag.name" :to="`/tags/${encodeURIComponent(tag.name)}`" class="topic-card"><small>TOPIC {{ String(i + 1).padStart(2, '0') }}</small><h2>{{ tag.name }}</h2><div><span>{{ tag.count }} 篇文章</span><span>↗</span></div></RouterLink></div><p v-if="!tags.length" class="empty-state">更多主题，慢慢收集。</p></div></template>

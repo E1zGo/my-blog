@@ -2,116 +2,25 @@
 import { useHead } from '@vueuse/head'
 import PostCard from '@/components/blog/PostCard.vue'
 import TagCloud from '@/components/blog/TagCloud.vue'
-
 import blogConfig from '../../blog.config'
 import { getAllPosts, getAllTags } from '@/utils/posts'
 useHead({ title: `${blogConfig.title} — ${blogConfig.subtitle}` })
-
 const posts = getAllPosts()
-const latestPosts = posts.slice(0, 6)
+const tags = getAllTags()
+const latestPosts = posts.slice(0, blogConfig.postsPerPage)
 </script>
-
 <template>
-  <!-- ── HERO ── -->
-  <section class="border-b-2 border-[var(--color-ink)] bg-[var(--color-ink)] overflow-hidden">
-    <div class="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
-      <!-- Text -->
-      <div>
-        <p class="font-mono text-xs tracking-[0.2em] uppercase text-[var(--color-accent)] mb-5 animate-fade-in-up">
-          // 欢迎来到我的数字空间
-        </p>
-        <h1 class="font-serif text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-[var(--color-paper)] mb-6 animate-fade-in-up delay-100">
-          {{ blogConfig.subtitle }}
-        </h1>
-        <p class="text-[var(--color-muted)] leading-relaxed mb-8 animate-fade-in-up delay-200">
-          {{ blogConfig.description }}
-        </p>
-        <div class="flex gap-4 animate-fade-in-up delay-300">
-          <RouterLink
-            to="/posts"
-            class="inline-flex items-center gap-2 bg-[var(--color-accent)] text-white px-6 py-3 font-mono text-xs tracking-widest uppercase no-underline hover:bg-[var(--color-accent2)] transition-colors"
-          >
-            → 开始阅读
-          </RouterLink>
-          <RouterLink
-            to="/about"
-            class="inline-flex items-center gap-2 border-2 border-[rgba(255,255,255,0.2)] text-[var(--color-warm)] px-6 py-3 font-mono text-xs tracking-widest uppercase no-underline hover:border-[var(--color-accent)] transition-colors"
-          >
-            关于我
-          </RouterLink>
-        </div>
+  <div class="page-width">
+    <section class="home-hero">
+      <div class="hero-copy"><p class="eyebrow"><span class="status-dot" /> A PERSONAL JOURNAL</p><h1>在代码里探索，<br />在生活里<span class="serif-emphasis">拾光。</span></h1><p class="hero-description">你好，我是 {{ blogConfig.author }}。<br />这里记录技术、思考，以及日常生活里的小小发现。</p><div class="hero-actions"><RouterLink to="/posts" class="button-primary">读一篇文章 <span>↗</span></RouterLink><RouterLink to="/about" class="text-link">认识一下我 <span>→</span></RouterLink></div><div class="hero-footnote"><span>{{ blogConfig.subtitle }}</span><span class="small-line" /><span>{{ blogConfig.description }}</span></div></div>
+      <div class="landscape-card" role="img" aria-label="暖色太阳照耀着层叠的青绿色山峦，山前山后各有风景">
+        <div class="landscape-caption"><span>FIELD NOTES</span><span>01 / ∞</span></div>
+        <svg class="landscape" viewBox="0 0 480 430" fill="none" aria-hidden="true"><defs><linearGradient id="sky" x1="240" y1="0" x2="240" y2="430" gradientUnits="userSpaceOnUse"><stop stop-color="#ecebda"/><stop offset="1" stop-color="#d8dfce"/></linearGradient><pattern id="contours" width="480" height="430" patternUnits="userSpaceOnUse"><path d="M-100 130Q150-20 530 120M-100 145Q150-5 530 135M-100 160Q150 10 530 150M-100 175Q150 25 530 165" stroke="#53694e" stroke-opacity=".1"/></pattern></defs><path fill="url(#sky)" d="M0 0h480v430H0z"/><circle cx="330" cy="113" r="42" fill="#cf895a"/><path fill="url(#contours)" d="M0 0h480v430H0z"/><path d="M0 249 111 121 242 276 342 192 480 281V430H0Z" fill="#a7b69b"/><path d="m0 284 164-95 170 138 146-73v176H0Z" fill="#708d77"/><path d="M0 350Q112 210 269 306T480 319v111H0Z" fill="#436c5d"/><path d="M0 395Q127 286 281 370t199-7v67H0Z" fill="#244e42"/><path d="M232 430q-67-27-21-55t-6-40q-32-15-20-28" stroke="#d6d5b8" stroke-width="2" stroke-linecap="round"/><path d="m55 82 5-3 5 3m8-10 5-3 5 3" stroke="#687b68" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div class="landscape-note"><span>山前山后<br /><strong>各有风景</strong></span><span class="landscape-seal">山<br />野</span></div><div class="landscape-bottom"><span>KEEP EXPLORING, KEEP WRITING.</span><span>↗</span></div>
       </div>
-
-      <!-- Terminal Card -->
-      <div class="animate-fade-in-up delay-200">
-        <div class="bg-[var(--color-code-bg)] border border-[rgba(255,255,255,0.08)] p-6 font-mono text-sm">
-          <div class="flex gap-2 mb-5">
-            <div class="w-3 h-3 rounded-full bg-[#ff5f56]" />
-            <div class="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-            <div class="w-3 h-3 rounded-full bg-[#27c93f]" />
-          </div>
-          <div class="text-[#6b5c4a] mb-2"># blog.config.ts</div>
-          <div class="text-[#c5b9a8] leading-7 text-xs">
-            <div><span class="text-[#e67e22]">author</span>: <span class="text-[#a8c5a0]">'{{ blogConfig.author }}'</span>,</div>
-            <div><span class="text-[#e67e22]">posts</span>: <span class="text-[#7eb8c4]">{{ posts.length }}</span>,</div>
-            <div><span class="text-[#e67e22]">stack</span>: [</div>
-            <div class="pl-4"><span class="text-[#a8c5a0]">'Vue 3'</span>, <span class="text-[#a8c5a0]">'Vite'</span>,</div>
-            <div class="pl-4"><span class="text-[#a8c5a0]">'TailwindCSS v4'</span>,</div>
-            <div class="pl-4"><span class="text-[#a8c5a0]">'TypeScript'</span>,</div>
-            <div>],</div>
-          </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-2 gap-3 mt-3">
-          <div
-  v-for="stat in [
-    { num: posts.length, label: '篇文章' },
-    { num: getAllTags().length, label: '个标签' },
-  ]"
-            :key="stat.label"
-            class="bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] p-4"
-          >
-            <div class="font-mono text-2xl font-semibold text-[var(--color-accent2)]">{{ stat.num }}</div>
-            <div class="font-mono text-[10px] tracking-widest uppercase text-[var(--color-muted)] mt-1">{{ stat.label }}</div>
-          </div>
-        </div>
-      </div>
+    </section>
+    <div class="home-content"><section class="latest-section"><div class="section-heading"><div><p class="eyebrow">THE LATEST</p><h2>最近在写<span class="count-label">{{ posts.length }} 篇文章</span></h2></div><RouterLink to="/posts" class="text-link">全部文章 ↗</RouterLink></div><div class="post-list"><PostCard v-for="(post, i) in latestPosts" :key="post.slug" :post="post" :index="i" /></div><p v-if="!latestPosts.length" class="empty-state">文字还在酝酿中，过些时候再来看看。</p></section>
+      <aside class="home-sidebar"><section class="author-card"><div class="author-card-top"><img :src="blogConfig.avatar" :alt="blogConfig.author" width="48" height="48" /><div><h2>{{ blogConfig.author }}</h2><span>开发者 · 生活记录者</span></div><span class="tiny-star" aria-hidden="true">✳</span></div><p>保持好奇，持续学习。<br />把踩过的坑、想通的事，<br />和沿途的风景留在这里。</p><RouterLink to="/about" class="text-link">更多关于我 <span>↗</span></RouterLink></section><section class="sidebar-topics"><div class="sidebar-title"><h2>按主题探索</h2><span>{{ tags.length }} TOPICS</span></div><TagCloud /></section><div class="sidebar-note"><span aria-hidden="true">“</span><p>写下来，<br />让思考有迹可循。</p><small>NOTES TO SELF</small></div></aside>
     </div>
-  </section>
-
-  <!-- ── LATEST POSTS ── -->
-  <section class="max-w-6xl mx-auto px-6 py-12">
-    <div class="flex items-baseline justify-between mb-8 pb-4 border-b-2 border-[var(--color-ink)]">
-      <div class="flex items-baseline gap-4">
-        <span class="bg-[var(--color-accent)] text-white font-mono text-[10px] tracking-widest uppercase px-2 py-1">Latest</span>
-        <h2 class="font-serif text-2xl font-semibold">最新文章</h2>
-      </div>
-      <RouterLink
-        to="/posts"
-        class="font-mono text-xs tracking-widest uppercase text-[var(--color-accent)] no-underline border-b border-[var(--color-accent)] hover:text-[var(--color-accent2)] hover:border-[var(--color-accent2)] transition-colors"
-      >
-        查看全部 →
-      </RouterLink>
-    </div>
-
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-0 border border-[rgba(26,22,18,0.15)]">
-      <PostCard
-        v-for="post in latestPosts"
-        :key="post.slug"
-        :post="post"
-        class="border-r border-[rgba(26,22,18,0.15)] last:border-r-0"
-      />
-    </div>
-
-    <div v-if="!latestPosts.length" class="text-center py-16 text-[var(--color-muted)] font-mono text-sm">
-      暂无文章，请在 content/posts/ 下创建 .md 文件
-    </div>
-  </section>
-
-  <!-- ── TAG CLOUD ── -->
-  <section class="max-w-6xl mx-auto px-6 pb-16 border-t border-[rgba(26,22,18,0.15)] pt-10">
-    <h3 class="font-mono text-xs tracking-widest uppercase text-[var(--color-muted)] mb-5">// 标签云</h3>
-    <TagCloud />
-  </section>
+  </div>
 </template>

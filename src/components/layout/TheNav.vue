@@ -1,92 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDarkMode } from '@/composables/useDarkMode'
 import { useUiStore } from '@/stores/ui'
 import blogConfig from '../../../blog.config'
-
-const router = useRouter()
-const { isDark, toggle: toggleDark } = useDarkMode()
+const route = useRoute()
+const { isDark, toggle } = useDarkMode()
 const ui = useUiStore()
 const mobileOpen = ref(false)
-
-function goHome() { router.push('/') }
+watch(() => route.path, () => { mobileOpen.value = false })
+const active = (path: string) => path === '/' ? route.path === '/' : route.path.startsWith(path)
 </script>
-
 <template>
-  <header class="sticky top-0 z-50 bg-[var(--color-ink)] border-b-[3px] border-[var(--color-accent)]">
-    <nav class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-      <!-- Logo -->
-      <button
-        class="font-mono text-sm tracking-widest uppercase text-[var(--color-paper)] cursor-pointer"
-        @click="goHome"
-      >
-        {{ blogConfig.title }}<span class="text-[var(--color-accent)]">.dev</span>
-      </button>
-
-      <!-- Desktop Nav -->
-      <ul class="hidden md:flex gap-8 list-none">
-        <li v-for="item in blogConfig.nav" :key="item.path">
-          <RouterLink
-            :to="item.path"
-            class="font-mono text-xs tracking-widest uppercase text-[var(--color-warm)] hover:text-[var(--color-accent2)] transition-colors no-underline"
-            :class="{ 'text-[var(--color-accent2)]!': $route.path === item.path }"
-          >
-            {{ item.label }}
-          </RouterLink>
-        </li>
-      </ul>
-
-      <!-- Actions -->
-      <div class="flex items-center gap-3">
-        <!-- Search -->
-        <button
-          class="font-mono text-xs tracking-widest uppercase text-[var(--color-muted)] hover:text-[var(--color-paper)] transition-colors px-2 py-1 border border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.3)] cursor-pointer"
-          @click="ui.openSearch"
-          title="搜索 (Ctrl+K)"
-        >
-          ⌕ 搜索
+  <header class="site-header" @keydown.esc="mobileOpen = false">
+    <nav class="site-nav page-width" aria-label="主导航">
+      <RouterLink to="/" class="brand" aria-label="返回首页">{{ blogConfig.title }}<span class="brand-dot">.</span><span class="brand-caption">独立博客</span></RouterLink>
+      <div class="desktop-nav"><RouterLink v-for="item in blogConfig.nav" :key="item.path" :to="item.path" :class="{ active: active(item.path) }" :aria-current="active(item.path) ? 'page' : undefined">{{ item.label }}</RouterLink></div>
+      <div class="nav-actions">
+        <button v-if="blogConfig.features.search" class="search-trigger" aria-label="搜索文章" @click="ui.openSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><span>搜索</span><kbd>Ctrl K</kbd></button>
+        <button v-if="blogConfig.features.darkMode" class="icon-button" :aria-label="isDark ? '切换浅色模式' : '切换深色模式'" :title="isDark ? '切换浅色模式' : '切换深色模式'" @click="toggle">
+          <svg v-if="isDark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
+          <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg>
         </button>
-
-        <!-- Dark Mode -->
-        <button
-          class="w-8 h-8 flex items-center justify-center text-[var(--color-muted)] hover:text-[var(--color-paper)] transition-colors cursor-pointer"
-          @click="toggleDark"
-          :title="isDark ? '切换亮色' : '切换暗色'"
-        >
-          <span class="text-base">{{ isDark ? '☀' : '☾' }}</span>
-        </button>
-
-        <!-- Mobile Menu -->
-        <button
-          class="md:hidden w-8 h-8 flex items-center justify-center text-[var(--color-paper)] cursor-pointer"
-          @click="mobileOpen = !mobileOpen"
-        >
-          <span class="text-xl">{{ mobileOpen ? '✕' : '≡' }}</span>
-        </button>
+        <button class="icon-button mobile-toggle" :aria-expanded="mobileOpen" aria-controls="mobile-nav" :aria-label="mobileOpen ? '关闭导航' : '展开导航'" @click="mobileOpen = !mobileOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><path :d="mobileOpen ? 'm6 6 12 12M6 18 18 6' : 'M4 7h16M4 12h16M4 17h16'"/></svg></button>
       </div>
     </nav>
-
-    <!-- Mobile Menu -->
-    <Transition name="slide">
-      <div v-if="mobileOpen" class="md:hidden bg-[var(--color-ink)] border-t border-[rgba(255,255,255,0.1)]">
-        <ul class="list-none px-6 py-4 flex flex-col gap-4">
-          <li v-for="item in blogConfig.nav" :key="item.path">
-            <RouterLink
-              :to="item.path"
-              class="font-mono text-sm tracking-widest uppercase text-[var(--color-warm)] hover:text-[var(--color-accent2)] transition-colors no-underline block"
-              @click="mobileOpen = false"
-            >
-              {{ item.label }}
-            </RouterLink>
-          </li>
-        </ul>
-      </div>
-    </Transition>
+    <nav v-if="mobileOpen" id="mobile-nav" class="mobile-nav page-width" aria-label="移动端导航"><RouterLink v-for="item in blogConfig.nav" :key="item.path" :to="item.path" :class="{ active: active(item.path) }">{{ item.label }}<span>↗</span></RouterLink></nav>
   </header>
 </template>
-
-<style scoped>
-.slide-enter-active, .slide-leave-active { transition: all 0.25s ease; }
-.slide-enter-from, .slide-leave-to { opacity: 0; transform: translateY(-10px); }
-</style>
