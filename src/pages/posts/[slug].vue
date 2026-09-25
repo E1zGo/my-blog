@@ -67,7 +67,7 @@ onUnmounted(() => timers.forEach(clearTimeout))
     <div class="page-width reading-layout">
       <div class="reading-main">
         <RouterLink to="/posts" class="text-link article-back">← 返回文章列表</RouterLink>
-        <header class="article-header"><div class="post-tags"><RouterLink v-for="tag in post.tags" :key="tag" :to="`/tags/${encodeURIComponent(tag)}`">{{ tag }}</RouterLink></div><h1>{{ post.title }}</h1><div class="post-meta"><span>{{ blogConfig.author }}</span><span>·</span><time :datetime="post.date">{{ formatDate(post.date) }}</time><span>·</span><span>{{ post.readTime }} 分钟阅读</span><span v-if="post.updated">更新于 {{ formatDate(post.updated) }}</span></div></header>
+        <header class="article-header"><div class="post-tags"><RouterLink v-for="tag in post.tags" :key="tag" :to="`/tags/${encodeURIComponent(tag)}`">{{ tag }}</RouterLink></div><h1>{{ post.title }}</h1><div class="post-meta"><span>{{ blogConfig.author }}</span><span>·</span><time :datetime="post.date">发布于 {{ formatDate(post.date) }}</time><span>·</span><span>预计阅读 {{ post.readTime }} 分钟</span><span v-if="post.updated">更新于 {{ formatDate(post.updated) }}</span></div></header>
         <img v-if="post.cover" :src="post.cover" :alt="post.title" class="article-cover" />
         <p v-if="post.excerpt" class="article-excerpt">{{ post.excerpt }}</p>
         <details v-if="blogConfig.features.toc && contentReady" class="mobile-toc"><summary>文章目录</summary><TableOfContents /></details>
