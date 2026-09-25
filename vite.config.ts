@@ -13,6 +13,7 @@ require('prismjs/components/prism-typescript')
 require('prismjs/components/prism-bash')
 require('prismjs/components/prism-json')
 require('prismjs/components/prism-css')
+require('prismjs/components/prism-java')
 
 export default defineConfig({
   plugins: [
