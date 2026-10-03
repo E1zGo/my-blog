@@ -1,0 +1,18 @@
+[
+  {"id":"q01","query":"训练目标 MSE loss","expected":[{"name":"TinyRestore · 示例论文","page":1}]},
+  {"id":"q02","query":"方法 噪声残差 convolutional residual","expected":[{"name":"TinyRestore · 示例论文","page":1}]},
+  {"id":"q03","query":"是否使用扩散采样 文本编码器","expected":[{"name":"TinyRestore · 示例论文","page":1}]},
+  {"id":"q04","query":"数据集 RGB PNG 归一化","expected":[{"name":"TinyRestore · 示例论文","page":2}]},
+  {"id":"q05","query":"预训练权重 占位符 checkpoints","expected":[{"name":"TinyRestore · 示例论文","page":2}]},
+  {"id":"q06","query":"Adam 学习率 随机种子","expected":[{"name":"TinyRestore · 示例论文","page":3}]},
+  {"id":"q07","query":"Python PyTorch torchvision 环境版本","expected":[{"name":"TinyRestore · 示例论文","page":3}]},
+  {"id":"q08","query":"评估指标 PSNR SSIM data_range","expected":[{"name":"TinyRestore · 示例论文","page":4}]},
+  {"id":"q09","query":"是否有真实训练结果 性能提升","expected":[{"name":"TinyRestore · 示例论文","page":4}]},
+  {"id":"q10","query":"requirements.txt torch torchvision Pillow","expected":[{"name":"requirements.txt","page":null}]},
+  {"id":"q11","query":"infer.py input checkpoint output","expected":[{"name":"infer.py","page":null}]},
+  {"id":"q12","query":"BATCH_SIZE LEARNING_RATE SEED","expected":[{"name":"train.py","page":null}]},
+  {"id":"q13","query":"CUDA out of memory Tried to allocate","expected":[{"name":"example-error.log","page":null}]},
+  {"id":"q14","query":"python evaluate.py prediction reference","expected":[{"name":"README.md","page":null}]},
+  {"id":"q15","query":"quantum cryptography entanglement","expected":[]},
+  {"id":"q16","query":"考古碳素断代陶瓷","expected":[]}
+]

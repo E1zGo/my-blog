@@ -1,0 +1,17 @@
+{
+  "title": "TinyRestore · 图像去噪复现示例",
+  "notice": "教学用合成资料，不对应已发表论文，不代表实测结果。",
+  "paper": [
+    "TinyRestore: A Minimal Image Denoising Baseline\n教学示例论文 / Synthetic teaching material\n\n1. 方法 Method\nTinyRestore 使用一个三层卷积神经网络预测图像噪声残差。将带噪图像输入模型，输出残差，再用输入减去残差得到复原图像。模型不包含扩散采样，也不使用预训练文本编码器。训练目标是预测残差与真实噪声之间的均方误差 MSE。\nThis baseline predicts the additive Gaussian noise residual with three convolutional layers. The restored image is the noisy input minus the predicted residual. The training objective is mean squared error (MSE).",
+    "2. 数据与权重 Dataset and weights\n训练集约定为 data/train 下的 RGB PNG 图像，验证集为 data/val。图像裁剪到 128×128，像素归一化到 [0,1]。训练时加入标准差 sigma=25/255 的高斯噪声。建议先使用自己有权使用的 10 张小图进行 smoke test。\n示例仓库不提供真实数据集与预训练权重。checkpoints/tinyrestore.pt 是文档约定的路径占位符，必须先训练或自行准备兼容权重。不能把该路径理解为已经存在的模型文件。",
+    "3. 实验设置 Experiments\n参考环境：Python 3.11，PyTorch 2.2.2，torchvision 0.17.2。batch size=8，Adam 学习率 0.001，随机种子 42。环境版本仅为教学样例中的约定，尚未在用户电脑验证。\n推理入口为 infer.py，训练入口为 train.py。CPU 可以用于小样本功能验证；实际训练所需 GPU 和显存没有测量数据。CUDA 构建版本需要按实际驱动和设备另行核对。",
+    "4. 评估与限制 Evaluation\n使用 PSNR 与 SSIM 衡量干净参考图像与复原图像的差异，同时报告带噪输入的基线指标。PSNR 必须统一 data_range=1.0；SSIM 应说明窗口大小和通道约定。至少固定一组验证图像与随机种子，保存每张图的指标。\n本材料没有真实训练结果，不能宣称 PSNR 提升或复现成功。模型过小，不足以代表当前去噪研究性能。资料用于测试检索、引用和复现计划生成流程。"
+  ],
+  "files": {
+    "README.md": "# TinyRestore — synthetic demo repository\n\nThis is teaching material, not a published method or a complete runnable training repository.\n\n## Environment 环境\nUse Python 3.11. Dependencies: torch==2.2.2 and torchvision==0.17.2. CUDA compatibility must be checked on the actual device.\n\n## Data 数据\nPut licensed RGB PNG images under data/train and data/val. Input size: 128x128. Gaussian noise sigma: 25/255.\n\n## Weights 权重\nNo pretrained weights are distributed. checkpoints/tinyrestore.pt is a placeholder; train your model or supply a compatible checkpoint.\n\n## Commands 运行步骤（未验证）\npython -m pip install -r requirements.txt\npython train.py --data data/train --epochs 10 --seed 42\npython infer.py --input data/val --checkpoint checkpoints/tinyrestore.pt --output outputs\npython evaluate.py --prediction outputs --reference data/val\n\n## Evaluation 验证\nCompare PSNR and SSIM against the noisy-input baseline with data_range=1.0. No benchmark scores are provided. Save configuration, seed, logs, and output images.\n",
+    "requirements.txt": "# Synthetic reference requirements, not verified on this computer.\ntorch==2.2.2\ntorchvision==0.17.2\nPillow==10.3.0\n",
+    "infer.py": "# Teaching-only entry point fragment; not a complete executable.\n# Load RGB images, convert to [0,1], predict residual, subtract and clamp.\n# Expected flags: --input --checkpoint --output\n# Missing weights must be reported instead of silently using random parameters.\n",
+    "train.py": "# Teaching-only training configuration.\nBATCH_SIZE = 8\nLEARNING_RATE = 0.001\nSEED = 42\n# Optimizer: Adam. Loss: MSE between predicted and true noise residual.\n# Input crops: 128x128. Noise standard deviation: 25/255.\n"
+  },
+  "log": "[Synthetic example log — not a real local experiment]\nCommand: python train.py --data data/train --epochs 10 --seed 42\nTraceback (most recent call last):\n  File \"train.py\", line 81, in train\n    loss.backward()\ntorch.OutOfMemoryError: CUDA out of memory. Tried to allocate 256.00 MiB.\n"
+}

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+data/
+data-*/
+*.pyc
+shared-conversation.html
+server*.log
+.coverage
+artifacts/

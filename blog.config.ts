@@ -15,8 +15,13 @@ const blogConfig = {
     { label: '首页', path: '/' },
     { label: '文章', path: '/posts' },
     { label: '标签', path: '/tags' },
+    { label: 'ResearchPilot', path: '/researchpilot' },
     { label: '关于', path: '/about' },
   ],
+  researchPilot: {
+    available: false, // Enable only after backend deployment acceptance.
+    url: '', // Planned: https://research.e1zgo.top
+  },
   features: {
     darkMode: true,
     search: true,

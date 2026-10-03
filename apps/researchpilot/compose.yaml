@@ -1,0 +1,20 @@
+services:
+  researchpilot:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - researchpilot-data:/app/data
+    environment:
+      RP_MODE: ${RP_MODE:-offline}
+      RP_AUTH_MODE: ${RP_AUTH_MODE:-local}
+      RP_COOKIE_SECURE: ${RP_COOKIE_SECURE:-false}
+      RP_API_BASE: ${RP_API_BASE:-https://api.openai.com/v1}
+      RP_API_KEY: ${RP_API_KEY:-}
+      RP_MODEL: ${RP_MODEL:-}
+      RP_EMBED_MODEL: ${RP_EMBED_MODEL:-}
+      RP_GITHUB_TOKEN: ${RP_GITHUB_TOKEN:-}
+      RP_MAX_UPLOAD_MB: ${RP_MAX_UPLOAD_MB:-200}
+    restart: unless-stopped
+volumes:
+  researchpilot-data:

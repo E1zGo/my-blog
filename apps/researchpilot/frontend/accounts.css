@@ -1,0 +1,7 @@
+.auth-locked>.sidebar,.auth-locked>.app-shell{display:none!important}
+#auth-screen{min-height:100vh;display:grid;place-items:center;padding:36px 20px;background:radial-gradient(ellipse at 20% 10%,#e4edda,transparent 60%),#f4f6f3}
+#auth-screen[hidden]{display:none}
+.auth-card{width:min(470px,100%);padding:36px;background:#fffefa;border:1px solid #dce3d5;border-radius:16px;box-shadow:0 18px 65px #4a633012}
+.auth-card>.brand{margin-bottom:35px}.auth-card h1{font-size:25px;line-height:1.5;margin:14px 0}.auth-card p,.auth-card li{font-size:13px;color:#65765a;line-height:1.85}.auth-card .eyebrow{font-size:10px}.auth-card .form-field{margin:18px 0}.auth-card .primary-button{width:100%;justify-content:center;margin:6px 0 20px}.auth-footnote{border-top:1px solid #dce3d5;padding-top:16px}.auth-card .error-box{color:#92463d}.auth-card pre{overflow:auto}
+.account-members,.account-signout{border-top:1px solid #dce3d5;margin-top:25px;padding-top:20px}.account-user{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #e3e8dd;gap:15px}.account-user small{display:block;margin-top:5px;color:#73836a}.account-user strong{overflow-wrap:anywhere}#account-nav-label{overflow:hidden;text-overflow:ellipsis}.account-members input{font-family:monospace}
+@media(max-width:620px){.auth-card{padding:24px}#auth-screen{padding:20px 12px}}

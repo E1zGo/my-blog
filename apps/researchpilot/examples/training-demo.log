@@ -1,0 +1,10 @@
+# ResearchPilot 合成日志：仅验证软件流程；未运行训练，不是真实模型成绩。
+epoch=1 step=100 train/loss=0.32 val/psnr=24.1dB val/ssim=0.71
+epoch=2 step=200 train/loss=0.24 val/psnr=25.3dB val/ssim=0.74
+epoch=3 step=300 train/loss=0.19 val/psnr=26.5dB val/ssim=0.78
+epoch=4 step=400 train/loss=0.15 val/psnr=27.2dB val/ssim=0.81
+epoch=5 step=500 train/loss=0.12 val/psnr=28.4dB val/ssim=0.84
+epoch=6 step=600 train/loss=0.11 val/psnr=28.1dB val/ssim=0.83
+epoch=7 step=700 train/loss=nan
+# 合成报错，用于验证诊断规则：
+RuntimeError: CUDA out of memory

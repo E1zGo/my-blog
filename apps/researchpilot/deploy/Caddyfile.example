@@ -1,0 +1,13 @@
+# Add this site block to the server's existing Caddy configuration; do not
+# replace other sites. Caddy 2.10+; validate the combined file before reload.
+research.e1zgo.top {
+    request_body {
+        # 200 MiB file + up to 100000 bytes for multipart metadata.
+        max_size 209815200
+    }
+    reverse_proxy 127.0.0.1:8765
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        -Server
+    }
+}

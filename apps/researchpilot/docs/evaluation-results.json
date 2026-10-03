@@ -1,0 +1,412 @@
+{
+  "generated_at": "2026-09-27T07:59:43.459430+00:00",
+  "corpus": "TinyRestore synthetic teaching fixture v1",
+  "retrieval": "BM25 with Chinese-English scientific term expansion",
+  "k": 3,
+  "questions": 16,
+  "answerable_questions": 14,
+  "unanswerable_questions": 2,
+  "recall_at_3": 1.0,
+  "mrr_at_3": 1.0,
+  "no_match_accuracy": 1.0,
+  "mean_retrieval_ms": 4.049,
+  "limitations": [
+    "Small synthetic development set, not an independent or real-paper benchmark.",
+    "Evaluates retrieved evidence, not generated-answer correctness or reproduction success.",
+    "No LLM, embeddings, GitHub network or GPU execution used."
+  ],
+  "details": [
+    {
+      "id": "q01",
+      "query": "训练目标 MSE loss",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        },
+        {
+          "name": "train.py",
+          "page": null
+        },
+        {
+          "name": "example-error.log",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 5.671
+    },
+    {
+      "id": "q02",
+      "query": "方法 噪声残差 convolutional residual",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "train.py",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 4.695
+    },
+    {
+      "id": "q03",
+      "query": "是否使用扩散采样 文本编码器",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 2
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 4
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.679
+    },
+    {
+      "id": "q04",
+      "query": "数据集 RGB PNG 归一化",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 2
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 2
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "infer.py",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 4.45
+    },
+    {
+      "id": "q05",
+      "query": "预训练权重 占位符 checkpoints",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 2
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 2
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 5.093
+    },
+    {
+      "id": "q06",
+      "query": "Adam 学习率 随机种子",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 3
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 3
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 4
+        },
+        {
+          "name": "train.py",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 4.405
+    },
+    {
+      "id": "q07",
+      "query": "Python PyTorch torchvision 环境版本",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 3
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 3
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "requirements.txt",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.226
+    },
+    {
+      "id": "q08",
+      "query": "评估指标 PSNR SSIM data_range",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 4
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 4
+        },
+        {
+          "name": "README.md",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 5.742
+    },
+    {
+      "id": "q09",
+      "query": "是否有真实训练结果 性能提升",
+      "expected": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 4
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 4
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 2
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 1
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.573
+    },
+    {
+      "id": "q10",
+      "query": "requirements.txt torch torchvision Pillow",
+      "expected": [
+        {
+          "name": "requirements.txt",
+          "page": null
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "requirements.txt",
+          "page": null
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "example-error.log",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.29
+    },
+    {
+      "id": "q11",
+      "query": "infer.py input checkpoint output",
+      "expected": [
+        {
+          "name": "infer.py",
+          "page": null
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "infer.py",
+          "page": null
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "README.md",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.311
+    },
+    {
+      "id": "q12",
+      "query": "BATCH_SIZE LEARNING_RATE SEED",
+      "expected": [
+        {
+          "name": "train.py",
+          "page": null
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "train.py",
+          "page": null
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "example-error.log",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.788
+    },
+    {
+      "id": "q13",
+      "query": "CUDA out of memory Tried to allocate",
+      "expected": [
+        {
+          "name": "example-error.log",
+          "page": null
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "example-error.log",
+          "page": null
+        },
+        {
+          "name": "infer.py",
+          "page": null
+        },
+        {
+          "name": "TinyRestore · 示例论文",
+          "page": 3
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.417
+    },
+    {
+      "id": "q14",
+      "query": "python evaluate.py prediction reference",
+      "expected": [
+        {
+          "name": "README.md",
+          "page": null
+        }
+      ],
+      "retrieved": [
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "README.md",
+          "page": null
+        },
+        {
+          "name": "example-error.log",
+          "page": null
+        }
+      ],
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "elapsed_ms": 3.753
+    },
+    {
+      "id": "q15",
+      "query": "quantum cryptography entanglement",
+      "expected": [],
+      "retrieved": [],
+      "recall_at_3": null,
+      "reciprocal_rank": null,
+      "elapsed_ms": 3.326
+    },
+    {
+      "id": "q16",
+      "query": "考古碳素断代陶瓷",
+      "expected": [],
+      "retrieved": [],
+      "recall_at_3": null,
+      "reciprocal_rank": null,
+      "elapsed_ms": 3.367
+    }
+  ]
+}

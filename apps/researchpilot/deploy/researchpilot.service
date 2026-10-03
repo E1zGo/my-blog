@@ -1,0 +1,31 @@
+[Unit]
+Description=ResearchPilot (single worker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=researchpilot
+Group=researchpilot
+WorkingDirectory=/opt/researchpilot/current
+EnvironmentFile=/etc/researchpilot.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=TMPDIR=/var/lib/researchpilot/tmp
+ExecStartPre=/opt/researchpilot/current/.venv/bin/python -m researchpilot.ops preflight
+ExecStart=/opt/researchpilot/current/.venv/bin/python -m uvicorn researchpilot.app:app --host 127.0.0.1 --port 8765 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-keep-alive 5 --no-access-log
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=120
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/researchpilot
+# Trial defaults: adjust after measuring large PDF parsing on the actual machine.
+MemoryMax=2G
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target
