@@ -1,0 +1,24 @@
+name: Blog and browser ResearchPilot checks
+on:
+  push:
+    paths: ['src/**', 'tests/**', 'build/**', 'public/**', 'package*.json', '*.ts', 'vercel.json', '.github/workflows/blog.yml']
+  pull_request:
+    paths: ['src/**', 'tests/**', 'build/**', 'public/**', 'package*.json', '*.ts', 'vercel.json', '.github/workflows/blog.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build

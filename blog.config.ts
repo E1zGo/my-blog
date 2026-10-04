@@ -19,8 +19,8 @@ const blogConfig = {
     { label: '关于', path: '/about' },
   ],
   researchPilot: {
-    available: false, // Enable only after backend deployment acceptance.
-    url: '', // Planned: https://research.e1zgo.top
+    available: true, // Browser edition: same-origin static route.
+    url: '/research', // Papers stay in the visitor’s browser.
   },
   features: {
     darkMode: true,
