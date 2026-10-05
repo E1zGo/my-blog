@@ -1,3 +1,5 @@
+> 2026-10-05 更新：浏览器智能精读已实现中文模型问答、本地 OCR、公式识别与辅助推导、按页全文翻译。配置方式、数据流和验收边界请先阅读 [智能精读说明](researchpilot-intelligence.md)。下文为基础浏览器版的交付记录，其中“不支持 OCR/翻译/模型”的旧边界已被本次更新取代。
+
 # ResearchPilot 浏览器本地版
 
 正式入口：博客导航 → `/researchpilot` → `/research`。使用现有 Vercel 静态托管，无需独立服务器、登录账号、数据库或文件存储服务。`apps/researchpilot/` 保留完整 Python 本机版源码，与浏览器版的资料互不共享。

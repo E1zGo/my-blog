@@ -4,18 +4,22 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node build/copy-pdf-assets.mjs && vite",
-    "build": "node build/copy-pdf-assets.mjs && vue-tsc -b && vite build",
+    "dev": "node build/copy-pdf-assets.mjs && node build/copy-ocr-assets.mjs && vite",
+    "build": "node build/copy-pdf-assets.mjs && node build/copy-ocr-assets.mjs && vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
+    "@tesseract.js-data/chi_sim": "1.0.0",
+    "@tesseract.js-data/eng": "1.0.0",
     "@vueuse/core": "^12.5.0",
     "@vueuse/head": "^2.0.0",
     "dayjs": "^1.11.13",
     "fuse.js": "^7.1.0",
+    "katex": "0.19.0",
     "pdfjs-dist": "6.4.299",
     "pinia": "^2.3.1",
+    "tesseract.js": "7.0.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

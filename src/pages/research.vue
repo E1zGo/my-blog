@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { useHead } from '@vueuse/head'
 import PdfReader from '../research/PdfReader.vue'
+const IntelligencePanel = defineAsyncComponent(() => import('../research/IntelligencePanel.vue'))
 import { MAX_FILE_BYTES, MAX_PAPERS } from '../research/types'
 import type { Expansion, Hit, Note, Paper } from '../research/types'
 import { importPdf } from '../research/pdf'
@@ -17,6 +18,7 @@ const currentPage = ref(1)
 const fileInput = ref<HTMLInputElement>()
 const loading = ref(true)
 const busy = ref(false)
+const aiBusy = ref(false)
 const saving = ref(false)
 const progress = ref({ current: 0, total: 0 })
 const status = ref('')
@@ -77,7 +79,7 @@ function restoreDraft(paper: Paper) {
   } catch { /* An invalid draft never prevents reading a saved paper. */ }
 }
 async function selectPaper(paper: Paper) {
-  if (busy.value || noteBusy.value || deleting.value) return
+  if (busy.value || aiBusy.value || noteBusy.value || deleting.value) return
   const change = ++paperChange
   exportOpen.value = false
   selectedId.value = paper.id
@@ -92,7 +94,7 @@ async function selectPaper(paper: Paper) {
   } catch (cause) { error.value = storageError(cause) }
 }
 async function importFile(file?: File) {
-  if (!file || busy.value || noteBusy.value || deleting.value) return
+  if (!file || busy.value || aiBusy.value || noteBusy.value || deleting.value) return
   error.value = ''; status.value = ''
   if (file.size > MAX_FILE_BYTES) { error.value = '单篇 PDF 不能超过 200 MB。'; return }
   busy.value = true; progress.value = { current: 0, total: 0 }
@@ -166,7 +168,7 @@ async function original() {
 }
 async function reparse() {
   const paper = active.value
-  if (!paper || busy.value || noteBusy.value || deleting.value) return
+  if (!paper || busy.value || aiBusy.value || noteBusy.value || deleting.value) return
   try { await importFile(new File([await readFile(paper.id)], paper.name, { type: 'application/pdf' })) }
   catch (cause) { error.value = storageError(cause) }
 }
@@ -185,12 +187,12 @@ async function copyNotes() {
   catch { error.value = '浏览器未允许复制，请选中导出预览中的文字后手动复制。' }
 }
 async function deletePaper() {
-  if (!active.value || busy.value || noteBusy.value || deleting.value) return
+  if (!active.value || busy.value || aiBusy.value || noteBusy.value || deleting.value) return
   const id = active.value.id
   deleting.value = true
   try {
     await removePaper(id)
-    localStorage.removeItem(draftKey(id)); selectedId.value = ''; notes.value = []; noteBody.value = ''; noteQuote.value = ''
+    localStorage.removeItem(draftKey(id)); localStorage.removeItem(`researchpilot:translation-options:${id}`); selectedId.value = ''; notes.value = []; noteBody.value = ''; noteQuote.value = ''
     await refresh(); deleting.value = false
     if (papers.value[0]) await selectPaper(papers.value[0])
     pendingDelete.value = false; status.value = '已从当前浏览器移除该论文及其笔记。'
@@ -203,8 +205,12 @@ async function protectStorage() {
     status.value = persistent.value ? '浏览器已允许持续保存；手动清理网站数据仍会删除资料，请定期导出笔记。' : '浏览器未授予持续保存权限，现有资料仍保留；请定期导出笔记。'
   } catch { error.value = '当前浏览器不支持持续保存请求，请定期导出笔记。' }
 }
-function leaving(event: BeforeUnloadEvent) { if (busy.value) { event.preventDefault(); event.returnValue = '' } }
-onBeforeRouteLeave(() => !busy.value || window.confirm('论文正在导入，离开会取消本次处理。仍要离开吗？'))
+async function refreshAfterOcr() {
+  ++searchId; hits.value = []; searched.value = false; searching.value = false
+  try { await refresh() } catch (cause) { error.value = storageError(cause) }
+}
+function leaving(event: BeforeUnloadEvent) { if (busy.value || aiBusy.value) { event.preventDefault(); event.returnValue = '' } }
+onBeforeRouteLeave(() => !(busy.value || aiBusy.value) || window.confirm('论文任务正在处理，离开会停止未完成部分。仍要离开吗？'))
 onMounted(async () => {
   try {
     worker = new Worker(new URL('../research/search.worker.ts', import.meta.url), { type: 'module' })
@@ -231,8 +237,8 @@ watch([query, limited, firstPage, lastPage], () => {
 
 <template>
   <div class="rp-workspace" @dragover.prevent @drop.prevent="dropped">
-    <header class="rp-heading"><div><p class="eyebrow">RESEARCHPILOT / BROWSER EDITION</p><h1>你的论文，本地研读。</h1><p>读原文、找证据、留笔记。所有论文都在当前浏览器中处理。</p></div><RouterLink to="/researchpilot" class="text-link">项目说明 ↗</RouterLink></header>
-    <aside class="rp-privacy"><span aria-hidden="true">◉</span><div><strong>浏览器本地版 · 无需登录</strong><p>不会把论文上传到服务器，不跨设备同步。清理网站数据、更换浏览器或使用隐私模式可能丢失本地资料，请保留原 PDF 并定期导出笔记。</p></div></aside>
+    <header class="rp-heading"><div><p class="eyebrow">RESEARCHPILOT / BROWSER EDITION</p><h1>你的论文，本地研读。</h1><p>读原文、找证据、留笔记。可选接入模型，深入问答、理解公式与翻译全文。</p></div><RouterLink to="/researchpilot" class="text-link">项目说明 ↗</RouterLink></header>
+    <aside class="rp-privacy"><span aria-hidden="true">◉</span><div><strong>浏览器本地版 · 无需登录</strong><p>论文与笔记保存在当前浏览器，不跨设备同步。本地阅读、检索和 OCR 不上传论文；启用模型后，任务所需文字或页面图片将发送到你指定的服务。清理网站数据、更换浏览器或使用隐私模式可能丢失本地资料，请保留原 PDF 并定期导出笔记。</p></div></aside>
     <p v-if="error" class="rp-message rp-error" role="alert">{{ error }}</p>
     <p v-if="status" class="rp-message" role="status">{{ status }}</p>
     <section v-if="exportOpen" class="rp-export" aria-label="笔记导出预览"><div class="rp-panel-heading"><h2>笔记导出预览</h2><button @click="exportOpen = false">关闭预览</button></div><p class="rp-small">{{ exportName }} · 包含原文引用、来源校验值与 PDF 页码。</p><textarea aria-label="Markdown 笔记内容" :value="exportText" readonly rows="10" @focus="($event.target as HTMLTextAreaElement).select()"></textarea><div><button class="rp-primary" @click="downloadNotes">下载 Markdown 文件</button><button class="rp-primary" @click="copyNotes">复制全部笔记</button></div></section>
@@ -241,20 +247,21 @@ watch([query, limited, firstPage, lastPage], () => {
       <aside class="rp-library" aria-label="本地论文库">
         <div class="rp-panel-heading"><h2>论文库</h2><span>{{ papers.length }} / {{ MAX_PAPERS }}</span></div>
         <input ref="fileInput" class="rp-hidden" type="file" accept=".pdf,application/pdf" aria-label="选择 PDF 论文" @change="importFile(($event.target as HTMLInputElement).files?.[0])">
-        <button class="rp-import-button" :disabled="busy || loading || noteBusy || deleting" @click="fileInput?.click()">＋ 导入 PDF</button>
+        <button class="rp-import-button" :disabled="busy || aiBusy || loading || noteBusy || deleting" @click="fileInput?.click()">＋ 导入 PDF</button>
         <p class="rp-small">每次一篇 · 最大 200 MB / 300 页<br>也可以将 PDF 拖入这里。</p>
         <p v-if="loading" role="status">正在读取本地资料…</p>
         <p v-else-if="!papers.length" class="rp-empty-library">还没有论文。<br>导入后即可查看原文与检索。</p>
-        <ul class="rp-paper-list"><li v-for="paper in papers" :key="paper.id"><button :class="{ selected: selectedId === paper.id }" :aria-current="selectedId === paper.id ? 'true' : undefined" :disabled="busy || noteBusy || deleting" @click="selectPaper(paper)"><strong>{{ paper.name }}</strong><span>{{ paper.pageCount }} 页 · {{ formatSize(paper.size) }}</span></button></li></ul>
+        <ul class="rp-paper-list"><li v-for="paper in papers" :key="paper.id"><button :class="{ selected: selectedId === paper.id }" :aria-current="selectedId === paper.id ? 'true' : undefined" :disabled="busy || aiBusy || noteBusy || deleting" @click="selectPaper(paper)"><strong>{{ paper.name }}</strong><span>{{ paper.pageCount }} 页 · {{ formatSize(paper.size) }}</span></button></li></ul>
         <div class="rp-storage"><p>已保存原文 {{ formatSize(used) }}</p><p v-if="storageRemaining !== null">浏览器剩余约 {{ formatSize(storageRemaining) }}</p><button @click="protectStorage" :disabled="persistent">{{ persistent ? '已获持续保存权限' : '请求浏览器持续保存' }}</button><p>容量由浏览器管理，剩余空间为估算值。</p></div>
       </aside>
       <div v-if="active" class="rp-document">
-        <div class="rp-document-heading"><div><h2>{{ active.name }}</h2><p>{{ active.pageCount }} 页 · {{ active.passages.length }} 个检索片段 · 离线术语检索</p></div><div class="rp-file-actions"><button @click="original">下载原文</button><button :disabled="busy || noteBusy || deleting" @click="reparse">重新解析</button><button :disabled="busy || noteBusy || deleting" @click="pendingDelete = !pendingDelete">移除</button></div></div>
-        <div v-if="pendingDelete" class="rp-delete-confirm"><p>移除后，这篇论文、阅读位置和已保存笔记将从当前浏览器删除，无法撤销。请先下载原文、导出笔记。</p><button @click="exportNotes">先导出笔记</button><button @click="deletePaper">确认移除本地资料</button><button @click="pendingDelete = false">保留</button></div>
-        <p v-if="active.emptyPages.length" class="rp-scan-warning">第 {{ active.emptyPages.slice(0, 12).join('、') }}{{ active.emptyPages.length > 12 ? ' 等' : '' }} 页没有提取到文字，可能为扫描页；仍可查看原文，暂不支持 OCR。</p>
+        <div class="rp-document-heading"><div><h2>{{ active.name }}</h2><p>{{ active.pageCount }} 页 · {{ active.passages.length }} 个检索片段 · 离线术语检索</p></div><div class="rp-file-actions"><button @click="original">下载原文</button><button :disabled="busy || aiBusy || noteBusy || deleting" @click="reparse">重新解析</button><button :disabled="busy || aiBusy || noteBusy || deleting" @click="pendingDelete = !pendingDelete">移除</button></div></div>
+        <div v-if="pendingDelete" class="rp-delete-confirm"><p>移除后，这篇论文、阅读位置、笔记、问答、公式结果和译文将从当前浏览器删除，无法撤销。请先下载原文、导出笔记。</p><button @click="exportNotes">先导出笔记</button><button @click="deletePaper">确认移除本地资料</button><button @click="pendingDelete = false">保留</button></div>
+        <p v-if="active.emptyPages.length" class="rp-scan-warning">第 {{ active.emptyPages.slice(0, 12).join('、') }}{{ active.emptyPages.length > 12 ? ' 等' : '' }} 页没有提取到文字，可能为扫描页；仍可查看原文；可在下方“智能精读 → 扫描 OCR”识别文字。</p>
         <div class="rp-reading-layout">
           <PdfReader :paper="active" :page="currentPage" @update:page="pageChanged" />
           <div class="rp-research-panel">
+            <IntelligencePanel :paper="active" :page="currentPage" :disabled="busy || noteBusy || deleting" @busy="aiBusy = $event" @updated="refreshAfterOcr" @page="pageChanged" />
             <section class="rp-search-section" aria-labelledby="rp-search-title"><div class="rp-panel-heading"><h2 id="rp-search-title">带着问题找证据</h2><span>当前论文</span></div><p class="rp-small">支持中文或英文关键词。结果为真实原文摘录，不是大模型回答。</p><form @submit.prevent="find"><label class="rp-label" for="rp-query">研究问题或关键词</label><textarea id="rp-query" v-model="query" maxlength="2000" rows="3" placeholder="例如：这篇论文的损失函数是什么？" required></textarea><div class="rp-suggestions"><button v-for="text in suggestions" :key="text" type="button" @click="suggest(text)">{{ text }}</button></div><label class="rp-range-toggle"><input v-model="limited" type="checkbox"> 限定页码范围</label><div v-if="limited" class="rp-range"><label>从 <input v-model.number="firstPage" type="number" min="1" :max="active.pageCount" required> 页</label><label>到 <input v-model.number="lastPage" type="number" min="1" :max="active.pageCount" required> 页</label></div><button type="submit" class="rp-primary" :disabled="searching">{{ searching ? '正在检索…' : '检索原文 →' }}</button></form>
               <p v-if="expansion.length" class="rp-expansion">术语对照：{{ expansion.map(item => `${item.term} → ${item.alternatives.join(' / ')}`).join('；') }}</p>
               <p v-if="searched && !searching && !hits.length" class="rp-no-hits">没有找到匹配证据。可换一个关键词、扩大页码范围，或使用论文中的英文术语；中文支持来自内置术语对照，暂不提供通用翻译。</p>
