@@ -1,5 +1,5 @@
 {
-  "functions": { "api/research-model.ts": { "maxDuration": 120 } },
+  "functions": { "api/research-model.ts": { "maxDuration": 120, "supportsCancellation": true } },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
     {

@@ -1,4 +1,9 @@
 {
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler"
+  },
   "files": [],
   "references": [
     { "path": "./tsconfig.app.json" },
