@@ -1,9 +1,9 @@
 name: Blog and browser ResearchPilot checks
 on:
   push:
-    paths: ['src/**', 'tests/**', 'build/**', 'public/**', 'package*.json', '*.ts', 'vercel.json', '.github/workflows/blog.yml']
+    paths: ['src/**', 'api/**', 'server/**', 'tests/**', 'build/**', 'public/**', 'package*.json', 'tsconfig*.json', '*.ts', 'vercel.json', '.github/workflows/blog.yml']
   pull_request:
-    paths: ['src/**', 'tests/**', 'build/**', 'public/**', 'package*.json', '*.ts', 'vercel.json', '.github/workflows/blog.yml']
+    paths: ['src/**', 'api/**', 'server/**', 'tests/**', 'build/**', 'public/**', 'package*.json', 'tsconfig*.json', '*.ts', 'vercel.json', '.github/workflows/blog.yml']
   workflow_dispatch:
 permissions:
   contents: read

@@ -4,6 +4,7 @@ import type { Paper, ResearchResult } from './types'
 import { listResults, saveOcrPage, saveResult, storageError } from './store'
 import { createCompletion, endpoint, validateSettings } from './model'
 import type { ModelSettings } from './model'
+import { HOSTED_MODEL, HOSTED_IDENTITY, createHostedCompletion, hostedStatus, validateAccessCode } from './hosted-model'
 import { askPaper, explainFormula, translationParts, translatePart } from './intelligence'
 import type { Answer, Formula, Translation, TranslationPart } from './intelligence'
 import { pageRenderer } from './page-image'
@@ -14,11 +15,17 @@ import RichText from './RichText.vue'
 const props = defineProps<{ paper: Paper; page: number; disabled: boolean }>()
 const emit = defineEmits<{ busy: [value: boolean]; updated: []; page: [value: number] }>()
 const settings = ref<ModelSettings>({ baseUrl: '', model: '', visionModel: '', apiKey: '' })
+const modelMode = ref<'hosted' | 'custom'>('hosted')
+const accessCode = ref('')
+const hostedEnabled = ref(false)
+const hostedChecking = ref(false)
+const hostedMessage = ref('正在检查站点模型…')
 try {
   const saved = JSON.parse(localStorage.getItem('researchpilot:model-preferences') || 'null')
   if (saved) for (const key of ['baseUrl', 'model', 'visionModel'] as const) if (typeof saved[key] === 'string') settings.value[key] = saved[key].slice(0, 2000)
+  if (saved?.mode === 'custom' || saved?.mode !== 'hosted' && saved?.baseUrl) modelMode.value = 'custom'
 } catch { /* Missing preferences never prevent local reading. */ }
-const settingsInitiallyOpen = !settings.value.baseUrl
+const settingsInitiallyOpen = modelMode.value === 'hosted' || !settings.value.baseUrl
 const tab = ref<'answer' | 'ocr' | 'formula' | 'translation'>('answer')
 const consent = ref(false)
 const working = ref(false)
@@ -40,7 +47,7 @@ const exportText = ref('')
 let controller: AbortController | undefined
 let disposed = false
 let refreshVersion = 0
-const service = computed(() => { try { return new URL(endpoint(settings.value.baseUrl)).origin } catch { return '尚未填写' } })
+const service = computed(() => { if (modelMode.value === 'hosted') return 'OpenAI（通过本站服务端）'; try { return new URL(endpoint(settings.value.baseUrl)).origin } catch { return '尚未填写' } })
 const locked = computed(() => working.value || props.disabled)
 const savedAnswers = computed(() => results.value.filter(r => r.kind === 'answer' || r.kind === 'formula'))
 const answer = computed(() => selectedResult.value?.kind === 'answer' ? selectedResult.value.data as Answer : undefined)
@@ -58,6 +65,20 @@ const missingPages = computed(() => {
 })
 const ocrInfo = computed(() => props.paper.ocrPages?.[props.page])
 
+async function checkHosted() {
+  if (hostedChecking.value) return
+  hostedChecking.value = true
+  try {
+    const enabled = await hostedStatus()
+    if (disposed) return
+    hostedEnabled.value = enabled
+    hostedMessage.value = enabled ? '站点模型已启用，填写访问码后即可使用；模型调用费用由站长承担。' : '站点模型尚未启用，等待站长配置。阅读、检索和本地 OCR 可正常使用。'
+  } catch { if (!disposed) { hostedEnabled.value = false; hostedMessage.value = '暂时无法检查站点模型，请稍后重新检查。' } }
+  finally { hostedChecking.value = false }
+}
+void checkHosted()
+function modelName(vision = false) { return modelMode.value === 'hosted' ? HOSTED_MODEL : (vision ? settings.value.visionModel : settings.value.model).trim() }
+
 async function reload() {
   const id = props.paper.id; const version = ++refreshVersion
   const records = await listResults(id)
@@ -66,16 +87,19 @@ async function reload() {
 function applySettings() {
   error.value = ''
   try {
-    validateSettings(settings.value)
-    localStorage.setItem('researchpilot:model-preferences', JSON.stringify({ baseUrl: settings.value.baseUrl.trim(), model: settings.value.model.trim(), visionModel: settings.value.visionModel.trim() }))
-    message.value = '服务地址与模型名称已记住。密钥只在当前页面内存中，刷新或离开工作台后需重新填写。'
+    if (modelMode.value === 'custom') validateSettings(settings.value)
+    localStorage.setItem('researchpilot:model-preferences', JSON.stringify({ mode: modelMode.value, baseUrl: settings.value.baseUrl.trim(), model: settings.value.model.trim(), visionModel: settings.value.visionModel.trim() }))
+    message.value = '服务选项已记住。访问码和密钥只在当前页面内存中，刷新或离开工作台后需重新填写。'
   } catch (cause) { error.value = storageError(cause) }
 }
-function forgetKey() { settings.value.apiKey = ''; consent.value = false; message.value = '已清除当前页面中的密钥。' }
+function forgetKey() { settings.value.apiKey = ''; accessCode.value = ''; consent.value = false; message.value = '已清除当前页面中的访问码和密钥。' }
 function ready(vision = false) {
-  validateSettings(settings.value, vision)
+  if (modelMode.value === 'hosted') {
+    if (!hostedEnabled.value) throw new Error(hostedMessage.value)
+    validateAccessCode(accessCode.value)
+  } else validateSettings(settings.value, vision)
   if (!consent.value) throw new Error('请先确认允许将任务所需内容发送至上方显示的模型服务。')
-  return createCompletion(toRaw(settings.value))
+  return modelMode.value === 'hosted' ? createHostedCompletion(accessCode.value) : createCompletion(toRaw(settings.value))
 }
 async function run(operation: (signal: AbortSignal, paper: Paper) => Promise<void>) {
   if (locked.value) return
@@ -93,7 +117,7 @@ async function store(record: ResearchResult, signal: AbortSignal) {
   await reload()
 }
 function record(paper: Paper, kind: ResearchResult['kind'], page: number, title: string, data: unknown, id: string = crypto.randomUUID()): ResearchResult {
-  return { id, paperId: paper.id, kind, page, title, data, model: kind === 'formula' ? settings.value.visionModel.trim() : settings.value.model.trim(), createdAt: new Date().toISOString() }
+  return { id, paperId: paper.id, kind, page, title, data, model: modelName(kind === 'formula'), createdAt: new Date().toISOString() }
 }
 function ask() { void run(async (signal, paper) => {
   const complete = ready()
@@ -106,7 +130,7 @@ function testConnection() { void run(async signal => {
   const complete = ready()
   message.value = '正在发送一条简短测试消息（不发送论文）…'
   await complete([{ role: 'user', content: '请回复“连接成功”。' }], signal)
-  message.value = '文本模型连接成功。公式识别还需要单独配置支持图片的视觉模型。'
+  message.value = modelMode.value === 'hosted' ? '站点模型连接成功，问答、公式与翻译均使用 GPT-6.1 Sol。' : '文本模型连接成功。公式识别还需要单独配置支持图片的视觉模型。'
 }) }
 function recognize() { void run(async (signal, paper) => {
   const pages = ocrScope.value === 'current' ? [props.page] : paper.emptyPages.slice()
@@ -165,10 +189,10 @@ function analyzeFormula() { void run(async (signal, paper) => {
   } finally { await renderer.close() }
 }) }
 async function makeParts(paper: Paper) {
-  return translationParts(paper, Number(first.value), Number(last.value), `${endpoint(settings.value.baseUrl)}|${settings.value.model.trim()}`, glossary.value.trim())
+  return translationParts(paper, Number(first.value), Number(last.value), modelMode.value === 'hosted' ? HOSTED_IDENTITY : `${endpoint(settings.value.baseUrl)}|${settings.value.model.trim()}`, glossary.value.trim())
 }
 function prepareTranslation() { void run(async (_signal, paper) => {
-  validateSettings(settings.value)
+  if (modelMode.value === 'custom') validateSettings(settings.value)
   parts.value = await makeParts(paper)
   if (!parts.value.length) throw new Error('所选页没有可翻译文字，请先 OCR。')
   message.value = `共 ${parts.value.length} 个片段，已有 ${translatedCount.value} 个相同配置的译文；继续将发送 ${parts.value.length - translatedCount.value} 次请求。${missingPages.value ? `另有 ${missingPages.value} 页没有文字，需 OCR 后才能覆盖全文。` : ''}`
@@ -215,7 +239,8 @@ function exportResults() {
   exportText.value = intro + content.join('\n\n')
 }
 function downloadExport() { download(new Blob([exportText.value], { type: 'text/markdown;charset=utf-8' }), `${props.paper.name.replace(/\.pdf$/i, '')}-智能研读.md`) }
-watch(() => [settings.value.baseUrl, settings.value.model, settings.value.visionModel, settings.value.apiKey], () => { consent.value = false; parts.value = [] })
+watch(() => [modelMode.value, accessCode.value, settings.value.baseUrl, settings.value.model, settings.value.visionModel, settings.value.apiKey], () => { consent.value = false; parts.value = [] })
+watch(modelMode, () => { accessCode.value = ''; settings.value.apiKey = '' })
 watch([first, last, glossary], () => {
   parts.value = []
   try { localStorage.setItem(`researchpilot:translation-options:${props.paper.id}`, JSON.stringify({ first: first.value, last: last.value, glossary: glossary.value })) }
@@ -232,7 +257,7 @@ watch(() => props.paper.id, () => {
   } catch { /* Invalid settings do not block reading saved results. */ }
   void reload().catch(cause => { error.value = storageError(cause) })
 }, { immediate: true })
-onBeforeUnmount(() => { disposed = true; ++refreshVersion; controller?.abort(); settings.value.apiKey = '' })
+onBeforeUnmount(() => { disposed = true; ++refreshVersion; controller?.abort(); settings.value.apiKey = ''; accessCode.value = '' })
 </script>
 
 <template>
@@ -240,15 +265,21 @@ onBeforeUnmount(() => { disposed = true; ++refreshVersion; controller?.abort(); 
     <div class="rp-panel-heading"><div><p class="eyebrow">READ WITH EVIDENCE</p><h2 id="rp-intelligence-title">智能精读</h2></div><span>结果保存到当前浏览器</span></div>
     <details class="rp-model-settings" :open="settingsInitiallyOpen">
       <summary>模型服务设置 · {{ service }}</summary>
-      <p class="rp-small">使用兼容 Chat Completions 且允许浏览器跨域访问的服务。密钥仅保留在当前页面内存中，不写入网站数据库或导出文件；刷新、离开后清除。请选择自己信任的服务，可使用权限和额度受限的密钥。</p>
-      <fieldset :disabled="locked"><div class="rp-settings-grid">
+      <fieldset :disabled="locked"><label>使用方式<select v-model="modelMode"><option value="hosted">站点模型 · GPT-6.1 Sol · 访问码试用</option><option value="custom">自己的模型服务 · 自行付费</option></select></label>
+      <div v-if="modelMode === 'hosted'">
+        <p class="rp-small">由站长提供 OpenAI API，问答、公式与翻译统一使用 GPT-6.1 Sol。无需填写 API 密钥；访问码只在当前页面内存中保留，刷新或离开后清除。</p>
+        <p role="status">{{ hostedMessage }}</p>
+        <label>试用访问码<input v-model="accessCode" type="password" autocomplete="off" spellcheck="false" maxlength="128" placeholder="填写站长提供的访问码"></label>
+        <button :disabled="hostedChecking" @click="checkHosted">{{ hostedChecking ? '检查中…' : '重新检查站点模型' }}</button>
+      </div>
+      <template v-else><p class="rp-small">使用兼容 Chat Completions 且允许浏览器跨域访问的服务。密钥仅保留在当前页面内存中，刷新、离开后清除。调用费用由你承担。</p><div class="rp-settings-grid">
         <label>服务地址<input v-model="settings.baseUrl" type="url" placeholder="https://你的服务/v1" autocomplete="off" maxlength="2000"></label>
         <label>文本模型<input v-model="settings.model" placeholder="填写服务商提供的模型名称" maxlength="200"></label>
         <label>视觉模型（公式识别）<input v-model="settings.visionModel" placeholder="填写支持图片输入的模型名称" maxlength="200"></label>
         <label>API 密钥<input v-model="settings.apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="仅在当前页面使用" maxlength="8192"></label>
-      </div><div class="rp-action-row"><button @click="applySettings">记住地址和模型</button><button @click="forgetKey">清除密钥</button><button @click="testConnection">测试文本模型连接</button></div></fieldset>
+      </div></template><div class="rp-action-row"><button @click="applySettings">记住服务选项</button><button @click="forgetKey">清除访问码 / 密钥</button><button :disabled="modelMode === 'hosted' && !hostedEnabled" @click="testConnection">测试模型连接</button></div></fieldset>
     </details>
-    <label class="rp-consent"><input v-model="consent" type="checkbox" :disabled="locked">我允许将本次任务所需的问题、论文片段或公式页图片发送至 {{ service }}，并承担服务商可能收取的费用。OCR 在本机运行，不需要此授权。</label>
+    <label class="rp-consent"><input v-model="consent" type="checkbox" :disabled="locked">我允许将本次任务所需的问题、论文片段或公式页图片发送至 {{ service }}。{{ modelMode === 'hosted' ? '本站处理后转发给 OpenAI，模型调用费用由站长承担。' : '模型服务可能向我收取费用。' }} OCR 在本机运行，不需要此授权。</label>
     <div class="rp-tabs" role="tablist" aria-label="智能精读功能"><button v-for="item in ([['answer','中文问答'],['ocr','扫描 OCR'],['formula','公式与推导'],['translation','全文翻译']] as const)" :id="`rp-tab-${item[0]}`" :key="item[0]" role="tab" :aria-selected="tab === item[0]" :aria-controls="`rp-panel-${item[0]}`" :disabled="locked" @click="tab = item[0]">{{ item[1] }}</button></div>
     <p v-if="error" class="rp-message rp-error" role="alert">{{ error }}</p>
     <div v-if="message || working" class="rp-ai-progress" role="status"><span>{{ message || '正在处理…' }}</span><button v-if="working" @click="controller?.abort()">停止处理</button></div>

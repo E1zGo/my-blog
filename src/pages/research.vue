@@ -238,7 +238,7 @@ watch([query, limited, firstPage, lastPage], () => {
 <template>
   <div class="rp-workspace" @dragover.prevent @drop.prevent="dropped">
     <header class="rp-heading"><div><p class="eyebrow">RESEARCHPILOT / BROWSER EDITION</p><h1>你的论文，本地研读。</h1><p>读原文、找证据、留笔记。可选接入模型，深入问答、理解公式与翻译全文。</p></div><RouterLink to="/researchpilot" class="text-link">项目说明 ↗</RouterLink></header>
-    <aside class="rp-privacy"><span aria-hidden="true">◉</span><div><strong>浏览器本地版 · 无需登录</strong><p>论文与笔记保存在当前浏览器，不跨设备同步。本地阅读、检索和 OCR 不上传论文；启用模型后，任务所需文字或页面图片将发送到你指定的服务。清理网站数据、更换浏览器或使用隐私模式可能丢失本地资料，请保留原 PDF 并定期导出笔记。</p></div></aside>
+    <aside class="rp-privacy"><span aria-hidden="true">◉</span><div><strong>浏览器本地版 · 本地阅读无需登录</strong><p>论文与笔记保存在当前浏览器，不跨设备同步。本地阅读、检索和 OCR 不上传论文。确认启用站点模型后，所需文字或页面图片经本站服务端发送给 OpenAI，费用由站长承担；自有模型则直接发送到你指定的服务。清理网站数据、更换浏览器或使用隐私模式可能丢失资料，请保留原 PDF 并定期导出笔记。</p></div></aside>
     <p v-if="error" class="rp-message rp-error" role="alert">{{ error }}</p>
     <p v-if="status" class="rp-message" role="status">{{ status }}</p>
     <section v-if="exportOpen" class="rp-export" aria-label="笔记导出预览"><div class="rp-panel-heading"><h2>笔记导出预览</h2><button @click="exportOpen = false">关闭预览</button></div><p class="rp-small">{{ exportName }} · 包含原文引用、来源校验值与 PDF 页码。</p><textarea aria-label="Markdown 笔记内容" :value="exportText" readonly rows="10" @focus="($event.target as HTMLTextAreaElement).select()"></textarea><div><button class="rp-primary" @click="downloadNotes">下载 Markdown 文件</button><button class="rp-primary" @click="copyNotes">复制全部笔记</button></div></section>
